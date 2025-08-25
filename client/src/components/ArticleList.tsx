@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { useAtomValue } from "jotai";
 
 import { getArticles } from "../adaptors/articlesCRUD";
 import type { Article, ArticleStatus } from "../types/Article";
 import ArticleListItem from "./ArticleListItem";
+import editIdAtom from "../atoms/EditId";
 
 const ListContainer = styled.ul`
   display: flex;
@@ -36,6 +38,8 @@ const ArticleList = ({
 }: ArticleListProps) => {
   const [articles, setArticles] = useState<Article[]>([]);
 
+  const editId = useAtomValue(editIdAtom);
+
   useEffect(() => {
     const fetchArticles = async () => {
       setArticles(await getArticles(listType, 0, 10));
@@ -49,23 +53,22 @@ const ArticleList = ({
         <ArticleContainer
           key={article.id}
           onClick={() => {
-            // Select or deselect the article
-            if (selectedArticles.includes(article.id)) {
-              setSelectedArticles(
-                selectedArticles.filter((id) => id !== article.id)
-              );
-            } else {
-              setSelectedArticles([...selectedArticles, article.id]);
+            // So that clicking to edit doesn't also select/deselect
+            if (editId !== article.id) {
+              // Select or deselect the article
+              if (selectedArticles.includes(article.id)) {
+                setSelectedArticles(
+                  selectedArticles.filter((id) => id !== article.id)
+                );
+              } else {
+                setSelectedArticles([...selectedArticles, article.id]);
+              }
             }
           }}
         >
           <ArticleListItem
-            link={article.link}
-            dateAdded={new Date(article.dateAdded).toLocaleDateString()}
             selected={selectedArticles.includes(article.id)}
-            title={article.title || "Unknown"}
-            author={article.author || "Unknown"}
-            siteName={article.siteName || "Unknown"}
+            article={article}
           />
         </ArticleContainer>
       ))}

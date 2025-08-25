@@ -4,7 +4,6 @@ export interface Article {
   id: number;
   link: string;
   dateAdded: string;
-  downloaded: boolean;
   dateDownloaded?: string;
   title?: string;
   author?: string;

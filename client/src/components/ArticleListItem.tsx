@@ -1,5 +1,10 @@
+import { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import { MdOpenInNew } from "react-icons/md";
+import { useAtom } from "jotai";
+
+import type { Article } from "../types/Article";
+import editIdAtom from "../atoms/EditId";
 
 const ListItem = styled.li`
   display: flex;
@@ -29,10 +34,11 @@ const Square = styled.div<{ selected: boolean }>`
   }
 `;
 
-const LeftDetailContainer = styled.div`
+const LeftDetailContainer = styled.div<{ editing: boolean }>`
   display: flex;
   flex-direction: column;
   column-gap: ${(props) => props.theme.spacing.sm};
+  ${(props) => (props.editing ? `row-gap: ${props.theme.spacing.xs};` : "")}
 `;
 
 const DetailRow = styled.div`
@@ -57,41 +63,110 @@ const ItemLink = styled.a`
   font-size: ${(props) => props.theme.textSize.md};
 `;
 
+const EditInput = styled.input`
+  background-color: ${(props) => props.theme.colors.primary};
+  border: 2px solid ${(props) => props.theme.colors.lightAccent};
+  margin: 0 ${(props) => props.theme.spacing.xs};
+`;
+
 interface ArticleListItemProps {
-  link: string;
-  dateAdded: string;
   selected: boolean;
-  title: string;
-  author: string;
-  siteName: string;
+  article: Article;
 }
 
-const ArticleListItem = ({
-  link,
-  dateAdded,
-  selected,
-  title,
-  author,
-  siteName,
-}: ArticleListItemProps) => {
+const ArticleListItem = ({ selected, article }: ArticleListItemProps) => {
+  // Needed to focus the whole list item, not just the input
+  const containerRef = useRef<HTMLLIElement>(null);
+
+  const [editedArticle, setEditedArticle] = useState<Article>(article);
+
+  const [editId, setEditId] = useAtom(editIdAtom);
+
+  const editing = editId === article.id;
+
+  useEffect(() => {
+    // Set focus to the whole list item when entering edit mode
+    // Needed to ensure onBlur works correctly
+    if (editing) {
+      containerRef.current?.focus();
+    }
+  }, [editing]);
+
   return (
-    <ListItem>
+    <ListItem
+      ref={containerRef}
+      // Needed for onBlur to work correctly
+      tabIndex={-1}
+      onBlurCapture={(e) => {
+        // Only setEditId(null) if focus is leaving the whole ListItem
+        if (!containerRef.current?.contains(e.relatedTarget)) {
+          setEditId(null);
+        }
+      }}
+    >
       <LeftContainer>
         <Square selected={selected} />
-        <LeftDetailContainer>
+        <LeftDetailContainer editing={editing}>
           <DetailRow>
-            <ItemTitle>{title}</ItemTitle>
-            <ItemDetails>({siteName})</ItemDetails>
+            <ItemTitle>
+              {editing ? (
+                <EditInput
+                  value={editedArticle.title}
+                  onChange={(e) =>
+                    setEditedArticle({
+                      ...editedArticle,
+                      title: e.target.value,
+                    })
+                  }
+                  placeholder="Title"
+                />
+              ) : (
+                article.title || "Unknown"
+              )}
+            </ItemTitle>
+            <ItemDetails>
+              (
+              {editing ? (
+                <EditInput
+                  value={editedArticle.siteName}
+                  onChange={(e) =>
+                    setEditedArticle({
+                      ...editedArticle,
+                      siteName: e.target.value,
+                    })
+                  }
+                  placeholder="Site Name"
+                />
+              ) : (
+                article.siteName || "Unknown"
+              )}
+              )
+            </ItemDetails>
           </DetailRow>
           <DetailRow>
-            <ItemDetails>{author}</ItemDetails>
             <ItemDetails>
-              Added: {new Date(dateAdded).toLocaleDateString()}
+              {editing ? (
+                <EditInput
+                  value={editedArticle.author}
+                  onChange={(e) =>
+                    setEditedArticle({
+                      ...editedArticle,
+                      author: e.target.value,
+                    })
+                  }
+                  placeholder="Author"
+                />
+              ) : (
+                article.author || "Unknown"
+              )}
+            </ItemDetails>
+            <ItemDetails>
+              Added: {new Date(article.dateAdded).toLocaleDateString()}
             </ItemDetails>
           </DetailRow>
         </LeftDetailContainer>
       </LeftContainer>
-      <ItemLink href={link} target="_blank">
+      <ItemLink href={article.link} target="_blank">
         <MdOpenInNew size={24} />
       </ItemLink>
     </ListItem>

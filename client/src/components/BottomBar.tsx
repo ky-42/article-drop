@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useSetAtom } from "jotai";
+import { useEffect, useState } from "react";
 import styled, { css } from "styled-components";
+
+import editIdAtom from "../atoms/EditId";
 
 const BottomBarContainer = styled.div`
   display: flex;
@@ -45,6 +48,10 @@ const ButtonCSS = css`
     cursor: pointer;
   }
 
+  &:active {
+    background-color: ${(props) => props.theme.colors.mildAccent};
+  }
+
   @media (max-width: ${(props) => props.theme.breakpoints.sm}) {
     padding: ${(props) => props.theme.spacing.sm};
   }
@@ -67,6 +74,33 @@ interface BottomBarProps {
 const BottomBar = ({ selectedArticles }: BottomBarProps) => {
   const [newArticleLink, setNewArticleLink] = useState<string>("");
 
+  const setEditId = useSetAtom(editIdAtom);
+
+  // const addArticle = () => {};
+
+  // useEffect(() => {
+  //   const handleKeyDown = async (e: KeyboardEvent) => {
+  //     // Global pasting for the article input
+  //     if (e.ctrlKey && e.key === "v") {
+  //       try {
+  //         setNewArticleLink(await navigator.clipboard.readText());
+  //       } catch {
+  //         console.error("Could not read clipboard");
+  //       }
+  //     }
+
+  //     if (e.key === "Enter" && selectedArticles.length === 0) {
+  //       addArticle();
+  //     }
+  //   };
+
+  //   window.addEventListener("keydown", handleKeyDown);
+
+  //   return () => {
+  //     window.removeEventListener("keydown", handleKeyDown);
+  //   };
+  // }, []);
+
   return (
     <BottomBarContainer>
       {(() => {
@@ -86,7 +120,9 @@ const BottomBar = ({ selectedArticles }: BottomBarProps) => {
           return (
             <>
               <SelectedButton>Download</SelectedButton>
-              <SelectedButton>Edit</SelectedButton>
+              <SelectedButton onClick={() => setEditId(selectedArticles[0])}>
+                Edit
+              </SelectedButton>
               <SelectedButton>Delete</SelectedButton>
             </>
           );
